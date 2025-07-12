@@ -21,7 +21,7 @@ pub struct AccountData {
 }
 
 fn print_instructions() {
-    println!("QuickBooks Account Query Service v4");
+    println!("QuickBooks Account Query Service v5");
     println!("===================================");
     println!();
     println!("This service reads configuration from config/config.toml and queries");
