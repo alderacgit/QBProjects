@@ -1,0 +1,37 @@
+node_modules/
+dist/
+.clasp.json
+*.log
+.DS_Store
+
+# Rust
+/target/
+**/target/
+**/*.rs.bk
+Cargo.lock
+*.pdb
+
+# Config files with sensitive data
+quickbooks-rust-service/config/config.toml
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PowerShell scripts with potential secrets
+*.ps1
+setup-*.ps1
+/target/
+
+# Backup files
+*~
+
+# Obsolete code
+OBSOLETE/
+**/OBSOLETE/

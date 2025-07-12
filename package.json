@@ -1,0 +1,22 @@
+{
+  "name": "google-sheets-functions",
+  "version": "1.0.0",
+  "description": "Custom functions for Google Sheets using Google Apps Script",
+  "main": "src/Code.js",
+  "scripts": {
+    "build": "npx tsc",
+    "push": "clasp push",
+    "deploy": "clasp deploy",
+    "setup": "clasp login && clasp create --type sheets",
+    "watch": "npx tsc --watch"
+  },
+  "dependencies": {
+    "@types/google-apps-script": "^1.0.83"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.2",
+    "typescript": "^5.8.3"
+  },
+  "author": "rsdancey",
+  "license": "MIT"
+}

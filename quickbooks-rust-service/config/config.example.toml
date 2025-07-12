@@ -1,0 +1,64 @@
+# QuickBooks to Google Sheets Sync Configuration
+
+[quickbooks]
+# How to connect to QuickBooks company file:
+# Options:
+#   1. Specific file path: "C:\\Users\\YourUser\\Documents\\QuickBooks\\Your Company.qbw"
+#      OR (the app will auto-convert single backslashes): "C:\Users\YourUser\Documents\QuickBooks\Your Company.qbw"
+#   2. Use currently open file: "AUTO"
+#   3. Empty string: Will prompt to select from available files
+#   4. Mock data for testing: "MOCK"
+company_file = "AUTO"
+# Account number to sync
+account_number = "9445"
+# Account name for logging/identification
+account_name = "INCOME TAX"
+
+# QuickBooks Authentication (optional)
+# Most users can leave these empty - see AUTHENTICATION.md for details
+
+# Company file password (if your .qbw file is password-protected)
+# Can also use environment variable: QB_FILE_PASSWORD
+company_file_password = ""
+
+# QuickBooks user credentials (for multi-user files only)
+# Can also use environment variables: QB_USERNAME and QB_USER_PASSWORD
+qb_username = ""
+qb_password = ""
+
+# Connection timeout in seconds
+connection_timeout = 30
+
+# QuickBooks Desktop Enterprise v24 Configuration Notes:
+# - Uses QBFC17.QBSessionManager (the service will auto-detect this)
+# - Requires Administrator privileges for first-time setup
+# - May need to configure QuickBooks to allow external applications
+# - For multi-user files, ensure proper user credentials are provided
+
+[google_sheets]
+# Your Google Apps Script Web App URL
+# Get this from: https://script.google.com/d/YOUR_SCRIPT_ID/edit
+# Deploy as Web App and copy the URL
+webapp_url = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"
+
+# API key for authentication - get this by running setupQuickBooksIntegration() in your Google Apps Script
+api_key = "YOUR_API_KEY_HERE"
+
+# Google Sheets Document ID (the actual spreadsheet file)
+# Get this from the URL: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
+# Example: "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+spreadsheet_id = "YOUR_SPREADSHEET_ID_HERE"
+
+# Sheet name (the tab within the spreadsheet document)
+# If not specified, uses the active/first sheet
+sheet_name = "Sheet1"
+
+# Cell address where the account balance should be updated
+cell_address = "A1"
+
+[schedule]
+# Cron expression for sync schedule
+# "0 0 * * * *" = every hour at minute 0
+# "0 */30 * * * *" = every 30 minutes
+# "0 0 */6 * * *" = every 6 hours
+cron_expression = "0 0 * * * *"

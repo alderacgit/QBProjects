@@ -1,0 +1,26 @@
+# Test Configuration for Mock Data Mode
+# Use this to test the service without QuickBooks SDK
+
+[quickbooks]
+# MOCK mode - no QuickBooks SDK required
+company_file = "MOCK"
+account_number = "9445"
+account_name = "INCOME TAX"
+application_name = "QuickBooks-Sheets-Sync"
+application_id = "25e0e396-0946-4db8-8326-e8d70534c64a"
+
+[google_sheets]
+# Replace with your actual Google Apps Script Web App URL
+webapp_url = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"
+# Replace with your actual API key
+api_key = "YOUR_API_KEY_HERE"
+# Replace with your actual spreadsheet ID
+spreadsheet_id = "YOUR_SPREADSHEET_ID_HERE"
+# Your sheet tab name
+sheet_name = "The Simple Buckets"
+# Cell to update
+cell_address = "A1"
+
+[schedule]
+# Test every 5 minutes
+cron_expression = "0 */5 * * * *"

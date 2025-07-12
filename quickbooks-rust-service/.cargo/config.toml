@@ -1,0 +1,8 @@
+[build]
+# Use less verbose error reporting
+term = "plain"
+
+# Only show messages and errors, not all compiler commands
+message-format = "human"
+
+target = "x86_64-pc-windows-msvc"
