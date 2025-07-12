@@ -165,7 +165,8 @@ impl QbxmlRequestProcessor {
             };
             let account_block = &response_xml[ret_start..ret_end];
             if let Some(full_name) = Self::extract_xml_field(account_block, "<FullName>", "</FullName>") {
-                if full_name == account_full_name {
+                let decoded_full_name = htmlescape::decode_html(&full_name).unwrap_or(full_name.clone());
+                if decoded_full_name == account_full_name {
                     balance = Self::extract_xml_field(account_block, "<Balance>", "</Balance>")
                         .and_then(|s| s.parse::<f64>().ok()).unwrap_or(0.0);
                     found = true;
