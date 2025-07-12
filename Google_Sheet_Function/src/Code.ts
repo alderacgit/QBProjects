@@ -9,20 +9,20 @@
  * No internal scheduling or config-driven account selection is used in this script.
  */
 /**
- * Updates a specific cell with QuickBooks account data
+ * Updates a specific cell with QuickBooks account data or a string value (e.g., timestamp)
  * @param {string} accountNumber - The QuickBooks account number (provided by the Windows service)
  * @param {number} accountValue - The account balance/value
  * @param {string} cellAddress - The cell address (e.g., "A1", "B2")
  * @param {string} spreadsheetId - The spreadsheet ID (optional, uses active if not provided)
  * @param {string} sheetName - The name of the sheet (optional)
+ * @param {string} [stringValue] - Optional string value to set (e.g., timestamp)
  * @return {string} Success message
  * @customfunction
  *
  * Note: Account selection is handled by the Windows service, not this script.
  */
-function UPDATE_QB_ACCOUNT(accountNumber, accountValue, cellAddress, spreadsheetId, sheetName) {
+function UPDATE_QB_ACCOUNT(accountNumber, accountValue, cellAddress, spreadsheetId, sheetName, stringValue) {
     try {
-        // Use specific spreadsheet if ID provided, otherwise use active spreadsheet
         const spreadsheet = spreadsheetId ?
             SpreadsheetApp.openById(spreadsheetId) :
             SpreadsheetApp.getActiveSpreadsheet();
@@ -31,15 +31,19 @@ function UPDATE_QB_ACCOUNT(accountNumber, accountValue, cellAddress, spreadsheet
             console.error(`[UPDATE_QB_ACCOUNT] Sheet not found: ${sheetName}`);
             throw new Error(`Sheet "${sheetName}" not found. Available sheets: ${allSheets.join(', ')}`);
         }
-        // Update the cell with the account value
         const range = sheet.getRange(cellAddress);
-        range.setValue(accountValue);
-        const msg = `Account ${accountNumber} updated: ${accountValue} at ${new Date().toLocaleString()}`;
+        if (stringValue !== undefined && stringValue !== null) {
+            range.setValue(stringValue);
+        } else {
+            range.setValue(accountValue);
+        }
+        const msg = stringValue !== undefined && stringValue !== null
+            ? `Cell ${cellAddress} updated with string: ${stringValue} at ${new Date().toLocaleString()}`
+            : `Account ${accountNumber} updated: ${accountValue} at ${new Date().toLocaleString()}`;
         return msg;
     }
     catch (error) {
         console.error('[UPDATE_QB_ACCOUNT] Error:', error);
-        // Re-throw the error instead of returning an error message
         throw error;
     }
 }
@@ -53,9 +57,9 @@ function doPost(e) {
     try {
         const data = JSON.parse(e.postData.contents);
         // Validate required fields
-        if (!data.accountNumber || data.accountValue === undefined || !data.cellAddress) {
+        if (!data.cellAddress) {
             console.error('[doPost] Missing required fields:', data);
-            throw new Error('Missing required fields: accountNumber, accountValue, cellAddress');
+            throw new Error('Missing required field: cellAddress');
         }
         // Validate API key for security
         const scriptApiKey = PropertiesService.getScriptProperties().getProperty('QB_API_KEY');
@@ -63,9 +67,15 @@ function doPost(e) {
             console.error('[doPost] Invalid API key:', data.apiKey);
             throw new Error('Invalid API key');
         }
-        // Update the QuickBooks account data
-        const result = UPDATE_QB_ACCOUNT(data.accountNumber, data.accountValue, data.cellAddress, data.spreadsheetId, // Pass spreadsheet ID if provided
-            data.sheetName);
+        // Update the QuickBooks account data or string value
+        const result = UPDATE_QB_ACCOUNT(
+            data.accountNumber || '',
+            data.accountValue,
+            data.cellAddress,
+            data.spreadsheetId,
+            data.sheetName,
+            data.stringValue // Pass stringValue if present
+        );
         return ContentService
             .createTextOutput(JSON.stringify({ success: true, message: result }))
             .setMimeType(ContentService.MimeType.JSON);
