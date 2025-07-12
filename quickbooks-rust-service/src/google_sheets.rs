@@ -11,13 +11,20 @@ pub struct GoogleSheetsClient {
 
 #[derive(Serialize)]
 struct GoogleSheetsPayload<'a> {
-    accountNumber: &'a str,
-    accountValue: f64,
-    cellAddress: &'a str,
-    spreadsheetId: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    sheetName: Option<&'a str>,
-    apiKey: &'a str,
+    #[serde(rename = "accountNumber")]
+    account_number: &'a str,
+    #[serde(rename = "accountValue")]
+    account_value: f64,
+    #[serde(rename = "cellAddress")]
+    cell_address: &'a str,
+    #[serde(rename = "spreadsheetId")]
+    spreadsheet_id: &'a str,
+    #[serde(rename = "sheetName", skip_serializing_if = "Option::is_none")]
+    sheet_name: Option<&'a str>,
+    #[serde(rename = "apiKey")]
+    api_key: &'a str,
+    #[serde(rename = "stringValue", skip_serializing_if = "Option::is_none")]
+    string_value: Option<&'a str>,
 }
 
 impl GoogleSheetsClient {
@@ -25,14 +32,15 @@ impl GoogleSheetsClient {
         Self { webapp_url, api_key, spreadsheet_id, sheet_name, cell_address }
     }
 
-    pub async fn send_balance(&self, account_number: &str, account_value: f64, sheet_name: Option<&str>, cell_address: Option<&str>) -> Result<()> {
+    pub async fn send_balance(&self, account_number: &str, account_value: f64, sheet_name: Option<&str>, cell_address: Option<&str>, string_value: Option<&str>) -> Result<()> {
         let payload = GoogleSheetsPayload {
-            accountNumber: account_number,
-            accountValue: account_value,
-            cellAddress: cell_address.unwrap_or(&self.cell_address),
-            spreadsheetId: &self.spreadsheet_id,
-            sheetName: sheet_name.or(self.sheet_name.as_deref()),
-            apiKey: &self.api_key,
+            account_number: account_number,
+            account_value: account_value,
+            cell_address: cell_address.unwrap_or(&self.cell_address),
+            spreadsheet_id: &self.spreadsheet_id,
+            sheet_name: sheet_name.or(self.sheet_name.as_deref()),
+            api_key: &self.api_key,
+            string_value: string_value,
         };
         let client = reqwest::Client::new();
         let res = client.post(&self.webapp_url)

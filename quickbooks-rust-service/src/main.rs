@@ -79,9 +79,7 @@ async fn run_qbxml(config: Config) -> Result<()> {
     let processor = QbxmlRequestProcessor::new().context("Failed to create QBXML request processor")?;
 
     let app_id = config.quickbooks.application_id.as_deref().unwrap_or("QuickBooks-Sheets-Sync");
-
     let app_name = config.quickbooks.application_name.as_deref().unwrap_or("QuickBooks Sheets Sync");
-
     processor.open_connection(app_id, app_name)?;
 
     let company_file = match config.quickbooks.company_file.as_str() { "AUTO" => "", path => path };
@@ -94,7 +92,6 @@ async fn run_qbxml(config: Config) -> Result<()> {
                 match processor.get_account_balance(&response_xml, &sync.account_full_name) {
                     Ok(Some(account_balance)) => {
                         info!("[QBXML] Account '{}' balance is: {:?}", sync.account_full_name, account_balance);
-                        // Create a new GoogleSheetsClient for each sync block with correct spreadsheet_id and cell_address
                         let gs_client = GoogleSheetsClient::new(
                             gs_cfg.webapp_url.clone(),
                             gs_cfg.api_key.clone(),
@@ -107,6 +104,7 @@ async fn run_qbxml(config: Config) -> Result<()> {
                             account_balance,
                             Some(&sync.sheet_name),
                             Some(&sync.cell_address),
+                            None,
                         ).await?;
                     },
                     Ok(None) => {
@@ -116,6 +114,27 @@ async fn run_qbxml(config: Config) -> Result<()> {
                         eprintln!("[QBXML] Error parsing balance for '{}': {:#}", sync.account_full_name, e);
                     }
                 }
+            }
+            // Inject timestamp after all sync_blocks processed
+            if let Some(ts_cfg) = config.timestamp.as_ref() {
+                use chrono::Local;
+                let now = Local::now();
+                let formatted = now.format("%d-%m-%Y:%H:%M").to_string();
+                let ts_client = GoogleSheetsClient::new(
+                    gs_cfg.webapp_url.clone(),
+                    gs_cfg.api_key.clone(),
+                    ts_cfg.spreadsheet_id.clone(),
+                    Some(ts_cfg.sheet_name.clone()),
+                    ts_cfg.cell_address.clone(),
+                );
+                ts_client.send_balance(
+                    "Timestamp",
+                    0.0,
+                    Some(&ts_cfg.sheet_name),
+                    Some(&ts_cfg.cell_address),
+                    Some(&formatted),
+                ).await?;
+                info!("[Sheets] Timestamp injected: {}", formatted);
             }
         },
         Ok(None) => {
