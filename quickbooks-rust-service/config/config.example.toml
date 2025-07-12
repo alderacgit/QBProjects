@@ -1,0 +1,50 @@
+# QuickBooks Sync Service Configuration
+
+[quickbooks]
+# How to connect to QuickBooks company file:
+# Options:
+#   1. Specific file path: "C:\\Users\\YourUser\\Documents\\QuickBooks\\Your Company.qbw"
+#   2. Use currently open file: "AUTO"
+#   3. Empty string: Will prompt to select from available files
+#   4. Mock data for testing: "MOCK"
+company_file = "?:\\Path\\To\\Your\\File"
+
+# Application name registered with QuickBooks (must match exactly)
+# This is the name you used when you first registered your application with QuickBooks
+application_name = "QuickBooks Sync Service"
+
+# Application ID (GUID) provided by QuickBooks during registration
+# This is the unique identifier for your application
+application_id = ""
+
+# Connection mode preference (optional)
+# Options:
+#   "multi-user" - Prioritize multi-user mode (recommended for production)
+#   "single-user" - Prioritize single-user mode
+#   "auto" - Try all modes automatically (default)
+connection_mode = "multi-user"
+
+# Google Sheets Sync Configuration
+
+[google_sheets]
+# Google Apps Script Web App URL
+webapp_url = "Your webapp url from Google Scripts"
+# API key for authentication
+api_key = "Your API key from Google Scripts"
+
+
+# This is the Profit Workshop
+[[sync_blocks]]
+# This is the gobbledygook in the URL to your sheet from Google
+spreadsheet_id = "A valid Spreadsheet ID"
+# This is the exact name of the account in your QuickBooks accounts - usually account numbers are not included in the names of the accounts
+account_full_name = "Cash Accounts:BoA Accounts:INCOME TAX"
+# This is the name of the tab on the sheet
+sheet_name = "The Simple Buckets"
+# This is the cell on the tab
+cell_address = "D5"
+
+[timestamp]
+spreadsheet_id = "A valid Spreadsheet ID"
+sheet_name = "The Simple Buckets"
+cell_address = "D4"
