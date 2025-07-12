@@ -8,6 +8,13 @@ pub struct Config {
     pub quickbooks: QuickBooksConfig,
     pub google_sheets: GoogleSheetsConfig,
     pub sync_blocks: Vec<AccountSyncConfig>,
+    pub timestamp: Option<TimestampConfig>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TimestampConfig {
+    pub spreadsheet_id: String,
+    pub sheet_name: String,
+    pub cell_address: String,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountSyncConfig {
