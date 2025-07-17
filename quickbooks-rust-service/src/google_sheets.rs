@@ -33,7 +33,7 @@ impl GoogleSheetsClient {
             api_key: &self.api_key,
             spreadsheet_id: &self.spreadsheet_id,
             sheet_name: sheet_name,
-            cell_address: cell_address.unwrap_or(&self.cell_address),
+            cell_address: cell_address,
             account_value: account_value,
             string_value: None,
         };
