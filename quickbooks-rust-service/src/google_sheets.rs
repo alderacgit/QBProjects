@@ -17,7 +17,7 @@ struct GoogleSheetsPayload<'a> {
     sheet_name: Option<&'a str>,
     #[serde(rename = "cellAddress")]
     cell_address: &'a str,
-    #[serde(rename = "accountValue")]
+    #[serde(rename = "floatValue")]
     account_value: f64,
     #[serde(rename = "stringValue", skip_serializing_if = "Option::is_none")]
     string_value: Option<&'a str>,
