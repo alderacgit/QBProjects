@@ -10,12 +10,23 @@ pub struct Config {
     pub sync_blocks: Vec<AccountSyncConfig>,
     pub timestamp: Option<TimestampConfig>,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimestampConfig {
     pub spreadsheet_id: String,
     pub sheet_name: String,
     pub cell_address: String,
 }
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GoogleSheetsConfig {
+    pub webapp_url: String,
+    pub api_key: String,
+    // spreadsheet_id is now per sync_block, not required here
+    // pub spreadsheet_id: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountSyncConfig {
     pub spreadsheet_id: String,
@@ -33,18 +44,6 @@ pub struct QuickBooksConfig {
     pub application_id: Option<String>,
     pub connection_timeout: Option<u32>,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GoogleSheetsConfig {
-    pub webapp_url: String,
-    pub api_key: String,
-    pub sheet_name: Option<String>,
-    pub cell_address: Option<String>,
-    // spreadsheet_id is now per sync_block, not required here
-    // pub spreadsheet_id: Option<String>,
-}
-
-
 
 impl Config {
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {

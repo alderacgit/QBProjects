@@ -21,14 +21,6 @@ pub const IID_IDispatch: winapi::shared::guiddef::GUID = winapi::shared::guiddef
     Data4: [0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46],
 };
 
-/* #[derive(Debug, Clone)]
-pub struct AccountInfo {
-    pub account_full_name: String,
-    pub number: String,
-    pub account_type: String,
-    pub balance: f64,
-} */
-
 impl QbxmlRequestProcessor {
     pub fn new() -> Result<Self, anyhow::Error> {
         // Use the single QBXML ProgID for RequestProcessor

@@ -8,99 +8,186 @@
  *
  * No internal scheduling or config-driven account selection is used in this script.
  */
+
 /**
- * Updates a specific cell with QuickBooks account data or a string value (e.g., timestamp)
- * @param {string} accountNumber - The QuickBooks account number (provided by the Windows service)
- * @param {number} accountValue - The account balance/value
- * @param {string} cellAddress - The cell address (e.g., "A1", "B2")
+ * @global
+ * @typedef {typeof SpreadsheetApp} SpreadsheetApp
+ * @typedef {typeof PropertiesService} PropertiesService
+ * @typedef {typeof ContentService} ContentService
+ * @typedef {typeof Utilities} Utilities
+ * @typedef {typeof ScriptApp} ScriptApp
+ * @typedef {typeof Session} Session
+ */
+
+/**
+ * Updates a specific cell with a float
  * @param {string} spreadsheetId - The spreadsheet ID (optional, uses active if not provided)
  * @param {string} sheetName - The name of the sheet (optional)
- * @param {string} [stringValue] - Optional string value to set (e.g., timestamp)
+ * @param {string} cellAddress - The cell address (e.g., "A1", "B2")
+ * @param {float} [floatValue] - Float to assign to cell)
  * @return {string} Success message
  * @customfunction
  *
  * Note: Account selection is handled by the Windows service, not this script.
  */
-function UPDATE_QB_ACCOUNT(accountNumber, accountValue, cellAddress, spreadsheetId, sheetName, stringValue) {
+function UPDATE_SHEET_CELL_FLOAT(spreadsheetId, sheetName, cellAddress, floatValue) {
     try {
         const spreadsheet = spreadsheetId ?
             SpreadsheetApp.openById(spreadsheetId) :
             SpreadsheetApp.getActiveSpreadsheet();
         const sheet = sheetName ? spreadsheet.getSheetByName(sheetName) : spreadsheet.getActiveSheet();
         if (!sheet) {
-            console.error(`[UPDATE_QB_ACCOUNT] Sheet not found: ${sheetName}`);
-            throw new Error(`Sheet "${sheetName}" not found. Available sheets: ${allSheets.join(', ')}`);
+            console.error(`[UPDATE_SHEET_CELL_FLOAT] Sheet not found: ${sheetName}`);
+            throw new Error(`Sheet "${sheetName}" not found.`);
+        }
+        const range = sheet.getRange(cellAddress);
+        if (floatValue !== undefined && floatValue !== null) {
+            range.setValue(floatValue);
+        }
+        const msg = floatValue !== undefined && floatValue !== null
+            ? `Cell ${cellAddress} updated with float: ${floatValue} at ${new Date().toLocaleString()}`
+            : 'floatValue was undefined or null';
+        return msg;
+    }
+    catch (error) {
+        console.error('[UPDATE_SHEET_CELL_FLOAT] Error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Updates a specific cell with a string
+ * @param {string} spreadsheetId - The spreadsheet ID (optional, uses active if not provided)
+ * @param {string} sheetName - The name of the sheet (optional)
+ * @param {string} cellAddress - The cell address (e.g., "A1", "B2")
+ * @param {string} [stringValue] - Float to assign to cell)
+ * @return {string} Success message
+ * @customfunction
+ *
+ * Note: Account selection is handled by the Windows service, not this script.
+ */
+
+function UPDATE_SHEET_CELL_STRING(spreadsheetId, sheetName, cellAddress,  stringValue) {
+    try {
+        const spreadsheet = spreadsheetId ?
+            SpreadsheetApp.openById(spreadsheetId) :
+            SpreadsheetApp.getActiveSpreadsheet();
+        const sheet = sheetName ? spreadsheet.getSheetByName(sheetName) : spreadsheet.getActiveSheet();
+        if (!sheet) {
+            console.error(`[UPDATE_SHEET_CELL_STRING] Sheet not found: ${sheetName}`);
+            throw new Error(`Sheet "${sheetName}" not found.`);
         }
         const range = sheet.getRange(cellAddress);
         if (stringValue !== undefined && stringValue !== null) {
             range.setValue(stringValue);
-        } else {
-            range.setValue(accountValue);
         }
         const msg = stringValue !== undefined && stringValue !== null
             ? `Cell ${cellAddress} updated with string: ${stringValue} at ${new Date().toLocaleString()}`
-            : `Account ${accountNumber} updated: ${accountValue} at ${new Date().toLocaleString()}`;
+            : 'stringValue was undefined or null';
         return msg;
     }
     catch (error) {
-        console.error('[UPDATE_QB_ACCOUNT] Error:', error);
+        console.error('[UPDATE_SHEET_CELL_STRING] Error:', error);
         throw error;
     }
 }
+
+/** Web App endpoint */
+function doPost(e) {
+    try {
+        const data = JSON.parse(e.postData.contents);
+        // Validate API key for security
+        const scriptApiKey = PropertiesService.getScriptProperties().getProperty('QB_API_KEY');
+        if (!data.apiKey || data.apiKey !== scriptApiKey) {
+            console.error('[doUpdateFloat] Invalid API key:', data.apiKey);
+            throw new Error('Invalid API key');
+        }
+        // Validate required fields
+        if (!data.spreadsheetId || !data.sheetName || !data.cellAddress) {
+            console.error('[doUpdateFloat] Missing required fields:', data);
+            throw new Error('Missing required field: cellAddress');
+        }
+       if (data.stringValue && data.stringValue !== "") {
+        return doUpdateString(data);
+        } else {
+        return doUpdateFloat(data);
+        }
+    }
+    catch (error) {
+        console.error('[doUpdateFloat] Error:', error);
+        return ContentService
+            .createTextOutput(JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
 /**
- * Web App endpoint to receive QuickBooks data from the Windows service
+ * Web App endpoint to receive float to post to sheet
  * This function handles POST requests from the Rust service running as a Windows service.
  *
  * The Windows service is responsible for selecting the account and scheduling execution.
  */
-function doPost(e) {
+function doUpdateFloat(data) {
     try {
-        const data = JSON.parse(e.postData.contents);
-        // Validate required fields
-        if (!data.cellAddress) {
-            console.error('[doPost] Missing required fields:', data);
-            throw new Error('Missing required field: cellAddress');
-        }
-        // Validate API key for security
-        const scriptApiKey = PropertiesService.getScriptProperties().getProperty('QB_API_KEY');
-        if (!data.apiKey || data.apiKey !== scriptApiKey) {
-            console.error('[doPost] Invalid API key:', data.apiKey);
-            throw new Error('Invalid API key');
-        }
         // Update the QuickBooks account data or string value
-        const result = UPDATE_QB_ACCOUNT(
-            data.accountNumber || '',
-            data.accountValue,
-            data.cellAddress,
+        const result = UPDATE_SHEET_CELL_FLOAT(
             data.spreadsheetId,
             data.sheetName,
-            data.stringValue // Pass stringValue if present
+            data.cellAddress,
+            data.floatValue
         );
         return ContentService
             .createTextOutput(JSON.stringify({ success: true, message: result }))
             .setMimeType(ContentService.MimeType.JSON);
     }
     catch (error) {
-        console.error('[doPost] Error:', error);
+        console.error('[doUpdateFloat] Error:', error);
         return ContentService
             .createTextOutput(JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }))
             .setMimeType(ContentService.MimeType.JSON);
     }
 }
+
 /**
- * Test function to verify Web App deployment
+ * Web App endpoint to receive string to post to sheet
+ * This function handles POST requests from the Rust service running as a Windows service.
+ *
+ * The Windows service is responsible for selecting the account and scheduling execution.
+ */
+function doUpdateString(data) {
+    try {
+        // Update the QuickBooks account data or string value
+        const result = UPDATE_SHEET_CELL_STRING(
+            data.spreadsheetId,
+            data.sheetName,
+            data.cellAddress,
+            data.stringValue
+        );
+        return ContentService
+            .createTextOutput(JSON.stringify({ success: true, message: result }))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+    catch (error) {
+        console.error('[doUpdateString] Error:', error);
+        return ContentService
+            .createTextOutput(JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * Test function to verify Deployment
  *
  * This function simulates a POST request as if sent by the Windows service.
  */
-function testWebAppEndpoint() {
+function testDoPostFloatEndpoint() {
     try {
         // Create a test POST request payload
         const testPayload = {
-            accountNumber: 'TEST',
-            accountValue: 999.99,
             spreadsheetId: SpreadsheetApp.getActiveSpreadsheet().getId(),
-            cellAddress: 'A1',
             sheetName: 'Sheet1',
+            cellAddress: 'A1',
+            floatValue: 999.99,
             apiKey: PropertiesService.getScriptProperties().getProperty('QB_API_KEY')
         };
         console.log('Test payload:', JSON.stringify(testPayload, null, 2));
@@ -110,13 +197,14 @@ function testWebAppEndpoint() {
                 contents: JSON.stringify(testPayload)
             }
         };
-        const response = doPost(mockEvent);
+        const response = doUpdateFloat(mockEvent);
         console.log('Response:', response.getContent());
     }
     catch (error) {
         console.error('Test failed:', error);
     }
 }
+
 /**
  * Set up the API key for QuickBooks integration
  * Run this once to set up authentication and test the setup
@@ -134,7 +222,7 @@ function setupQuickBooksIntegration() {
         console.log('API Key:', apiKey);
         console.log('Copy this API key to your Rust service configuration.');
         // Test the UPDATE_QB_ACCOUNT function
-        const testResult = UPDATE_QB_ACCOUNT('TEST', 1234.56, 'A1');
+        const testResult = testDoPostFloatEndpoint();
         console.log('Test result:', testResult);
         return apiKey;
     }
@@ -143,6 +231,7 @@ function setupQuickBooksIntegration() {
         throw error;
     }
 }
+
 /**
  * Get the current API key (for setup purposes)
  * @return {string} The current API key
@@ -150,18 +239,7 @@ function setupQuickBooksIntegration() {
 function getQuickBooksApiKey() {
     return PropertiesService.getScriptProperties().getProperty('QB_API_KEY') || 'Not set';
 }
-/**
- * Manually trigger QuickBooks account update (for testing)
- * @param {number} accountValue - The account balance to set
- * @param {string} cellAddress - The cell address to update
- * @return {string} Result message
- * @customfunction
- *
- * Note: For production, updates are triggered by the Windows service, not manually.
- */
-function TEST_QB_UPDATE(accountValue, cellAddress) {
-    return UPDATE_QB_ACCOUNT('9445', accountValue, cellAddress);
-}
+
 /**
  * Setup function to configure permissions and test access
  * Run this function first to set up all necessary permissions
@@ -210,7 +288,6 @@ function setupPermissions() {
         console.log('📋 Next steps:');
         console.log('   1. Run setupQuickBooksIntegration() to generate API key');
         console.log('   2. Deploy as Web App with "Anyone" access');
-        console.log('   3. Test with testWebAppEndpoint()');
     }
     catch (error) {
         console.error('❌ Permission setup failed:', error);
@@ -222,6 +299,7 @@ function setupPermissions() {
         throw error;
     }
 }
+
 /**
  * Check current permissions and access levels
  */

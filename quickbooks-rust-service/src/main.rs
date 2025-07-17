@@ -96,15 +96,11 @@ async fn run_qbxml(config: Config) -> Result<()> {
                             gs_cfg.webapp_url.clone(),
                             gs_cfg.api_key.clone(),
                             sync.spreadsheet_id.clone(),
-                            Some(sync.sheet_name.clone()),
-                            sync.cell_address.clone(),
                         );
                         gs_client.send_balance(
-                            &sync.account_full_name,
                             account_balance,
                             Some(&sync.sheet_name),
                             Some(&sync.cell_address),
-                            None,
                         ).await?;
                     },
                     Ok(None) => {
@@ -124,15 +120,11 @@ async fn run_qbxml(config: Config) -> Result<()> {
                     gs_cfg.webapp_url.clone(),
                     gs_cfg.api_key.clone(),
                     ts_cfg.spreadsheet_id.clone(),
-                    Some(ts_cfg.sheet_name.clone()),
-                    ts_cfg.cell_address.clone(),
                 );
-                ts_client.send_balance(
-                    "Timestamp",
-                    0.0,
+                ts_client.send_timestamp(
+                    Some(&formatted),
                     Some(&ts_cfg.sheet_name),
                     Some(&ts_cfg.cell_address),
-                    Some(&formatted),
                 ).await?;
                 info!("[Sheets] Timestamp injected: {}", formatted);
             }
