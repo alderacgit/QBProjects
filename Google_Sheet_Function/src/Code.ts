@@ -96,6 +96,7 @@ function UPDATE_SHEET_CELL_STRING(spreadsheetId, sheetName, cellAddress,  string
 function doPost(e) {
     try {
         const data = JSON.parse(e.postData.contents);
+        console.log('Received payload:', JSON.stringify(e, null, 2));
         // Validate API key for security
         const scriptApiKey = PropertiesService.getScriptProperties().getProperty('QB_API_KEY');
         if (!data.apiKey || data.apiKey !== scriptApiKey) {
@@ -197,7 +198,7 @@ function testDoPostFloatEndpoint() {
                 contents: JSON.stringify(testPayload)
             }
         };
-        const response = doUpdateFloat(mockEvent);
+        const response = doPost(mockEvent);
         console.log('Response:', response.getContent());
     }
     catch (error) {

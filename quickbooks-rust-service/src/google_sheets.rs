@@ -28,13 +28,13 @@ impl GoogleSheetsClient {
         Self { webapp_url, api_key, spreadsheet_id }
     }
 
-    pub async fn send_balance(&self, account_value: f64, sheet_name: Option<&str>, cell_address: Option<&str>) -> Result<()> {
+    pub async fn send_balance(&self, current_account_value: f64, sheet_name: Option<&str>, cell_address: Option<&str>) -> Result<()> {
         let payload = GoogleSheetsPayload {
             api_key: &self.api_key,
             spreadsheet_id: &self.spreadsheet_id,
             sheet_name: sheet_name,
             cell_address: cell_address.unwrap_or(""),
-            account_value: account_value,
+            account_value: current_account_value,
             string_value: None,
         };
         let client = reqwest::Client::new();
