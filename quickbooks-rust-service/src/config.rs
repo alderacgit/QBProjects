@@ -8,7 +8,7 @@ pub struct Config {
     pub quickbooks: QuickBooksConfig,
     pub google_sheets: GoogleSheetsConfig,
     pub sync_blocks: Vec<AccountSyncConfig>,
-    pub timestamp: Option<TimestampConfig>,
+    pub timestamp_blocks: Vec<TimestampConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
