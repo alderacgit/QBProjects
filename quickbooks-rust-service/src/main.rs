@@ -38,33 +38,33 @@ fn print_instructions() {
     println!();
 }
 
-async fn process_sync_blocks(processor: &QbxmlRequestProcessor, response_xml: &str, sync_block: &AccountSyncConfig, config: &Config) -> Result<()> {
+async fn process_sync_blocks(processor: &QbxmlRequestProcessor, response_xml: &str, the_sync_block: &AccountSyncConfig, config: &Config) -> Result<()> {
     let gs_cfg = &config.google_sheets;
-    match processor.get_account_balance(&response_xml, &sync_block.account_full_name) {
+    match processor.get_account_balance(&response_xml, &the_sync_block.account_full_name) {
     Ok(Some(account_balance)) => {
-        info!("[QBXML] Account '{}' balance is: {:?}", sync_block.account_full_name, account_balance);
+        info!("[QBXML] Account '{}' balance is: {:?}", the_sync_block.account_full_name, account_balance);
         let gs_client = GoogleSheetsClient::new(
             gs_cfg.webapp_url.clone(),
             gs_cfg.api_key.clone(),
-            sync_block.spreadsheet_id.clone(),
+            the_sync_block.spreadsheet_id.clone(),
             );
         gs_client.send_balance(
             account_balance,
-            Some(&sync_block.sheet_name),
-            Some(&sync_block.cell_address),
+            Some(&the_sync_block.sheet_name),
+            Some(&the_sync_block.cell_address),
             ).await?;
             },
         Ok(None) => {
-          info!("[QBXML] No valid balance for account '{}'.", sync_block.account_full_name);
+          info!("[QBXML] No valid balance for account '{}'.", the_sync_block.account_full_name);
             },
         Err(e) => {
-            eprintln!("[QBXML] Error parsing balance for '{}': {:#}", sync_block.account_full_name, e);
+            eprintln!("[QBXML] Error parsing balance for '{}': {:#}", the_sync_block.account_full_name, e);
             }
     }
     Ok(())
 }
 
-async fn process_timestamp_blocks(timestamp_block: &TimestampConfig, config: &Config, ) -> Result<()> {
+async fn process_timestamp_blocks(the_timestamp_block: &TimestampConfig, config: &Config, ) -> Result<()> {
     use chrono::Local;
     let gs_cfg = &config.google_sheets;
     let now = Local::now();
@@ -72,23 +72,25 @@ async fn process_timestamp_blocks(timestamp_block: &TimestampConfig, config: &Co
     let gs_client = GoogleSheetsClient::new(
         gs_cfg.webapp_url.clone(),
         gs_cfg.api_key.clone(),
-        timestamp_block.spreadsheet_id.clone(),
+        the_timestamp_block.spreadsheet_id.clone(),
         );
     gs_client.send_timestamp(
         Some(&formatted_time), 
-        Some(&timestamp_block.sheet_name),
-        Some(&timestamp_block.cell_address),
+        Some(&the_timestamp_block.sheet_name),
+        Some(&the_timestamp_block.cell_address),
         ).await?;
     Ok(())
 }
 
 async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: Config) -> Result<()> {
-    for sync_block in config.sync_blocks {
-        process_sync_blocks(&processor, &response_xml, &sync_block, &config).await?;
+    let mut sync_block_collecation = config.sync_blocks.iter().collect();
+    for sync_block in sync_block_collecation {
+        process_sync_blocks(&processor, &response_xml, sync_block, &config).await?;
     }
     // Inject timestamp after all sync_blocks processed
-    for timestamp_block in config.timestamp_blocks {
-        process_timestamp_blocks(&timestamp_block, &config).await?;
+    let mut timestamp_block_collecation = config.timestamp_blocks.iter().collect();
+    for timestamp_block in timestamp_block_collection {
+        process_timestamp_blocks(timestamp_block, &config).await?;
         }
     Ok(())
 }
