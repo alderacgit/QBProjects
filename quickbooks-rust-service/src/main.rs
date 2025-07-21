@@ -4,6 +4,7 @@ mod qbxml_safe;
 
 use anyhow::{Result, Context};
 use log::info;
+use winapi::um::winnt::UpdateBlackBoxRecorder;
 use std::env;
 
 use crate::config::{AccountSyncConfig, TimestampConfig, Config};
@@ -95,12 +96,21 @@ async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, co
 async fn run_qbxml(config: &Config) -> Result<()> {
     unsafe {
         let hr = winapi::um::combaseapi::CoInitializeEx(std::ptr::null_mut(), winapi::um::objbase::COINIT_APARTMENTTHREADED);
+        // We can bail out here if there is a failure because nothing will need to be cleaned up
         if hr < 0 {
             return Err(anyhow::anyhow!("Failed to initialize COM system: HRESULT=0x{:08X}", hr));
         }
     }
 
-    let processor = QbxmlRequestProcessor::new().context("Failed to create QBXML request processor")?;
+    let processor = match QbxmlRequestProcessor::new() {
+        Ok(None) | Err(e) => {
+            eprintln!("[QBXML]: Failed to create QBXML request processor: {:#}", e);
+            // YOLO - this is the only cleanup needed at this point in the function
+            unsafe { winapi::um::combaseapi::CoUninitialize();  }
+            return Err(e);
+            },
+        Ok(Some(processor)) => processor,
+    };
     
     // AppID isn't used by the QBSDK, if a value is passed in config it is harmless but not used
     let app_id = config.quickbooks.application_id.as_deref().unwrap_or(""); 
@@ -124,35 +134,52 @@ async fn run_qbxml(config: &Config) -> Result<()> {
     let ticket = processor.begin_session(company_file, crate::FileMode::DoNotCare)?;
 
     /* 
-    we'll get the Err match arm here if the ticket is invalid so we'll just let this match do double-duty for the
-    happy and sad paths
+    ... we'll get the Err and Ok(None) match arms deal with it if the ticket is invalid
     */
     match processor.get_account_xml(&ticket) {
         Ok(Some(response_xml)) => {
-            process_qbxml(&processor, &response_xml, config).await?;
+            // this is it! This is where all the real processing starts!
+            match process_qbxml(&processor, &response_xml, config).await? {
+                Err(e) => eprintln!("[QBXML] Error processing QBXML: {:#}", e),
+                Ok(()) => eprintln!("[QBXML] Processing succeeded")
+            };
         },
         Ok(None) => {
             eprintln!("[QBXML] No response_xml received");
         },
         Err(e) => {
+            /* 
+            we can't exit the function here because it is possible that we have an open connection or have
+            initialized the COM system and we need to try to clean Up before we exit
+            */
             eprintln!("[QBXML] Error querying Quickbooks: {:#}", e);
         }
     }
+
     /* 
-    original code had a ? here, but I want to try to continue clean up even if this fails
+    Begin cleanup. Because it is hard to test earlier to see if we have a valid state for COM 
+    we have to try to clean up everything just in case something managed to open or initialize
+    */
+
+    /* 
+    We want to try to continue clean up even if this fails
     I think this could happen if the ticket was invalid but the connection might be open
     */
-    if processor.end_session(&ticket) = Err(e) {
-        eprintln!("[QBXML] end_session errored: {:#}", e);
+    if let Err(e) = processor.end_session(&ticket) {
+        eprintln!("[QBXML] end_session errored: {:#}", e)
     }
+
     /* 
-    original code had a ? here, but I want to try to continue clean up even if this fails
-    I think this could happen if the connection was open but the COM system was initialized
+    We want to try to continue clean up even if this fails
+    I think this could happen if the connection was not open but the COM system was initialized
     */
-    if processor.close_connection() = Err(e) {
+    if let Err(e) = processor.close_connection() {
         eprintln!("[QBXML] close_connection errored: {:#}", e);
     }
-    // YOLO
+
+    /*
+    YOLO
+    */
     unsafe { winapi::um::combaseapi::CoUninitialize(); }
 
     /* 
