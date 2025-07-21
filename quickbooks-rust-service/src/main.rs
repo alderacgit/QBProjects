@@ -6,7 +6,7 @@ use anyhow::{Result, Context};
 use log::info;
 use winapi::um::winnt::UpdateBlackBoxRecorder;
 use std::env;
-use futures::future::join_all; // <-- Add this import
+use futures::future::join_all; 
 
 use crate::config::{AccountSyncConfig, TimestampConfig, Config};
 use crate::file_mode::FileMode;
@@ -84,6 +84,7 @@ async fn process_timestamp_blocks(the_timestamp_block: &TimestampConfig, config:
 }
 
 async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: &Config) -> Result<()> {
+    // Process sync blocks in parallel
     let sync_futures = config.sync_blocks.iter().map(|sync_block| {
         process_sync_blocks(processor, response_xml, sync_block, config)
     });
