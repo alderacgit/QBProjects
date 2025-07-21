@@ -84,11 +84,11 @@ async fn process_timestamp_blocks(timestamp_block: &TimestampConfig, config: &Co
 
 async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: Config) -> Result<()> {
     for sync_block in config.sync_blocks {
-        process_sync_blocks(&processor, &response_xml, &sync_block, &config)?;
+        process_sync_blocks(&processor, &response_xml, &sync_block, &config).await?;
     }
     // Inject timestamp after all sync_blocks processed
     for timestamp_block in config.timestamp_blocks {
-        process_timestamp_blocks(&timestamp_block, &config)?;
+        process_timestamp_blocks(&timestamp_block, &config).await?;
         }
     Ok(())
 }
@@ -103,13 +103,20 @@ async fn run_qbxml(config: &Config) -> Result<()> {
     }
 
     let processor = match QbxmlRequestProcessor::new() {
-        Ok(None) | Err(e) => {
+        Ok(Some(processor)) => processor,
+        Ok(None) => {
+            eprintln!("[QBXML]: Failed to create QBXML request processor, returned Ok(None)");
+            // YOLO - this is the only cleanup needed at this point in the function
+            unsafe { winapi::um::combaseapi::CoUninitialize();  }
+            return Err(anyhow::anyhow!("Failed to create QBXML request processor, returned Ok(None)"));
+
+        },
+        Err(e) => {
             eprintln!("[QBXML]: Failed to create QBXML request processor: {:#}", e);
             // YOLO - this is the only cleanup needed at this point in the function
             unsafe { winapi::um::combaseapi::CoUninitialize();  }
             return Err(e);
             },
-        Ok(Some(processor)) => processor,
     };
     
     // AppID isn't used by the QBSDK, if a value is passed in config it is harmless but not used
@@ -120,54 +127,59 @@ async fn run_qbxml(config: &Config) -> Result<()> {
     */
     let app_name = config.quickbooks.application_name.as_deref().unwrap_or("QuickBooks Sync Service"); 
     
-    processor.open_connection(app_id, app_name)?;
+    if let Ok(()) = processor.open_connection(app_id, app_name) {
 
-    // sets company_file to AUTO if blank, company file name if provided in config.toml
-    let company_file = match config.quickbooks.company_file.as_str() { 
-        "AUTO" => "",
-        path => {
-            println!("[DEBUG] Company file: {}", path);
-            path }
-        };
-    
-    // we could try to check to see if we have an apparenlty valid ticket here but ...
-    let ticket = processor.begin_session(company_file, crate::FileMode::DoNotCare)?;
-
-    /* 
-    ... we'll get the Err and Ok(None) match arms deal with it if the ticket is invalid
-    */
-    match processor.get_account_xml(&ticket) {
-        Ok(Some(response_xml)) => {
-            // this is it! This is where all the real processing starts!
-            match process_qbxml(&processor, &response_xml, config).await? {
-                Err(e) => eprintln!("[QBXML] Error processing QBXML: {:#}", e),
-                Ok(()) => eprintln!("[QBXML] Processing succeeded")
+        // sets company_file to AUTO if blank, company file name if provided in config.toml
+        let company_file = match config.quickbooks.company_file.as_str() { 
+            "AUTO" => "",
+            path => {
+                println!("[DEBUG] Company file: {}", path);
+                path }
             };
-        },
-        Ok(None) => {
-            eprintln!("[QBXML] No response_xml received");
-        },
-        Err(e) => {
-            /* 
-            we can't exit the function here because it is possible that we have an open connection or have
-            initialized the COM system and we need to try to clean Up before we exit
-            */
-            eprintln!("[QBXML] Error querying Quickbooks: {:#}", e);
+    
+        // we could try to check to see if we have an apparenlty valid ticket here but ...
+        let ticket = processor.begin_session(company_file, crate::FileMode::DoNotCare)?;
+
+        /* 
+        ... we'll get the Err and Ok(None) match arms deal with it if the ticket is invalid
+        */
+        match processor.get_account_xml(&ticket) {
+            Ok(Some(response_xml)) => {
+                // this is it! This is where all the real processing starts!
+                match process_qbxml(&processor, &response_xml, config).await? {
+                    Err(e) => eprintln!("[QBXML] Error processing QBXML: {:#}", e),
+                    Ok(()) => eprintln!("[QBXML] Processing succeeded")
+                };
+            },
+            Ok(None) => {
+                eprintln!("[QBXML] No response_xml received, ticket probably invalid");
+            },
+            Err(e) => {
+                /* 
+                we can't exit the function here because it is possible that we have an open connection or have
+                initialized the COM system and we need to try to clean Up before we exit
+                */
+                eprintln!("[QBXML] Error querying Quickbooks: {:#}", e);
+            }
         }
+        /* 
+        The COM system has returned all sorts of values for tickets when the ticket fails to be created
+        so we can't just assume that we can detect an invalid ticket; we should attempt to close the
+        session regardless of what we got as a ticket.
+
+        We don't want to bail out here in the event of an error because there are still cleanup steps needed
+        */
+        if let Err(e) = processor.end_session(&ticket) {
+            eprintln!("[QBXML] end_session errored: {:#}", e)
+        }
+
     }
 
     /* 
     Begin cleanup. Because it is hard to test earlier to see if we have a valid state for COM 
-    we have to try to clean up everything just in case something managed to open or initialize
+    we have to try to clean up everything just in case something managed to open or initialize even if
+    running process_qbxml() failed
     */
-
-    /* 
-    We want to try to continue clean up even if this fails
-    I think this could happen if the ticket was invalid but the connection might be open
-    */
-    if let Err(e) = processor.end_session(&ticket) {
-        eprintln!("[QBXML] end_session errored: {:#}", e)
-    }
 
     /* 
     We want to try to continue clean up even if this fails
