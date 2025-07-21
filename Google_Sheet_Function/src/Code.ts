@@ -92,36 +92,6 @@ function UPDATE_SHEET_CELL_STRING(spreadsheetId, sheetName, cellAddress,  string
     }
 }
 
-/** Web App endpoint */
-function doPost(e) {
-    try {
-        const data = JSON.parse(e.postData.contents);
-        console.log('Received payload:', JSON.stringify(e, null, 2));
-        // Validate API key for security
-        const scriptApiKey = PropertiesService.getScriptProperties().getProperty('QB_API_KEY');
-        if (!data.apiKey || data.apiKey !== scriptApiKey) {
-            console.error('[doUpdateFloat] Invalid API key:', data.apiKey);
-            throw new Error('Invalid API key');
-        }
-        // Validate required fields
-        if (!data.spreadsheetId || !data.sheetName || !data.cellAddress) {
-            console.error('[doUpdateFloat] Missing required fields:', data);
-            throw new Error('Missing required field: cellAddress');
-        }
-       if (data.stringValue && data.stringValue !== "") {
-        return doUpdateString(data);
-        } else {
-        return doUpdateFloat(data);
-        }
-    }
-    catch (error) {
-        console.error('[doUpdateFloat] Error:', error);
-        return ContentService
-            .createTextOutput(JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }))
-            .setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
 /**
  * Web App endpoint to receive float to post to sheet
  * This function handles POST requests from the Rust service running as a Windows service.
@@ -138,7 +108,7 @@ function doUpdateFloat(data) {
             data.floatValue
         );
         return ContentService
-            .createTextOutput(JSON.stringify({ success: true, message: result }))
+            //.createTextOutput(JSON.stringify({ success: true, message: result }))
             .setMimeType(ContentService.MimeType.JSON);
     }
     catch (error) {
@@ -170,6 +140,36 @@ function doUpdateString(data) {
     }
     catch (error) {
         console.error('[doUpdateString] Error:', error);
+        return ContentService
+            // .createTextOutput(JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/** Web App endpoint */
+function doPost(e) {
+    try {
+        const data = JSON.parse(e.postData.contents);
+        // console.log('Received payload:', JSON.stringify(e, null, 2));
+        // Validate API key for security
+        const scriptApiKey = PropertiesService.getScriptProperties().getProperty('QB_API_KEY');
+        if (!data.apiKey || data.apiKey !== scriptApiKey) {
+            console.error('[doPost] Invalid API key:', data.apiKey);
+            throw new Error('Invalid API key');
+        }
+        // Validate required fields
+        if (!data.spreadsheetId || !data.sheetName || !data.cellAddress) {
+            console.error('[doPost] Missing required fields:', data);
+            throw new Error('Missing required field: cellAddress');
+        }
+       if (data.stringValue && data.stringValue !== "") {
+        return doUpdateString(data);
+        } else {
+        return doUpdateFloat(data);
+        }
+    }
+    catch (error) {
+        console.error('[doPost] Error:', error);
         return ContentService
             .createTextOutput(JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }))
             .setMimeType(ContentService.MimeType.JSON);
