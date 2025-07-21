@@ -103,14 +103,7 @@ async fn run_qbxml(config: &Config) -> Result<()> {
     }
 
     let processor = match QbxmlRequestProcessor::new() {
-        Ok(Some(processor)) => processor,
-        Ok(None) => {
-            eprintln!("[QBXML]: Failed to create QBXML request processor, returned Ok(None)");
-            // YOLO - this is the only cleanup needed at this point in the function
-            unsafe { winapi::um::combaseapi::CoUninitialize();  }
-            return Err(anyhow::anyhow!("Failed to create QBXML request processor, returned Ok(None)"));
-
-        },
+        Ok(processor) => processor,
         Err(e) => {
             eprintln!("[QBXML]: Failed to create QBXML request processor: {:#}", e);
             // YOLO - this is the only cleanup needed at this point in the function
@@ -146,7 +139,7 @@ async fn run_qbxml(config: &Config) -> Result<()> {
         match processor.get_account_xml(&ticket) {
             Ok(Some(response_xml)) => {
                 // this is it! This is where all the real processing starts!
-                match process_qbxml(&processor, &response_xml, config).await? {
+                match process_qbxml(&processor, &response_xml, config).await {
                     Err(e) => eprintln!("[QBXML] Error processing QBXML: {:#}", e),
                     Ok(()) => eprintln!("[QBXML] Processing succeeded")
                 };
