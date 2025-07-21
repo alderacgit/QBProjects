@@ -38,7 +38,7 @@ fn print_instructions() {
     println!();
 }
 
-async fn process_sync_blocks(processor: &QbxmlRequestProcessor, response_xml: &str, sync_block: &AccountSyncConfig, config: &Config) -> result<()> {
+async fn process_sync_blocks(processor: &QbxmlRequestProcessor, response_xml: &str, sync_block: &AccountSyncConfig, config: &Config) -> Result<()> {
     let gs_cfg = &config.google_sheets;
     match processor.get_account_balance(&response_xml, &sync_block.account_full_name) {
     Ok(Some(account_balance)) => {
@@ -46,7 +46,7 @@ async fn process_sync_blocks(processor: &QbxmlRequestProcessor, response_xml: &s
         let gs_client = GoogleSheetsClient::new(
             gs_cfg.webapp_url.clone(),
             gs_cfg.api_key.clone(),
-            sync.spreadsheet_id.clone(),
+            sync_block.spreadsheet_id.clone(),
             );
         gs_client.send_balance(
             account_balance,
@@ -72,7 +72,7 @@ async fn process_timestamp_blocks(timestamp_block: &TimestampConfig, config: &Co
     let gs_client = GoogleSheetsClient::new(
         gs_cfg.webapp_url.clone(),
         gs_cfg.api_key.clone(),
-        gs_cfg.spreadsheet_id.clone(),
+        timestamp_block.spreadsheet_id.clone(),
         );
     gs_client.send_timestamp(
         Some(&formatted_time), 
@@ -83,11 +83,11 @@ async fn process_timestamp_blocks(timestamp_block: &TimestampConfig, config: &Co
 }
 
 async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: Config) -> Result<()> {
-    for sync_block in &config.sync_blocks {
+    for sync_block in config.sync_blocks {
         process_sync_blocks(&processor, &response_xml, &sync_block, &config).await?;
     }
     // Inject timestamp after all sync_blocks processed
-    for timestamp_block in &config.timestamp_blocks {
+    for timestamp_block in config.timestamp_blocks {
         process_timestamp_blocks(&timestamp_block, &config, ).await?;
         }
     Ok(())
