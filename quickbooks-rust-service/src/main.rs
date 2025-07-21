@@ -4,10 +4,9 @@ mod qbxml_safe;
 
 use anyhow::{Result, Context};
 use log::info;
-use quickbooks_sheets_sync::config::{AccountSyncConfig, TimestampConfig};
 use std::env;
 
-use crate::config::Config;
+use crate::config::{AccountSyncConfig, TimestampConfig, Config};
 use crate::file_mode::FileMode;
 use crate::qbxml_safe::qbxml_request_processor::QbxmlRequestProcessor;
 mod google_sheets;
@@ -84,46 +83,16 @@ async fn process_timestamp_blocks(timestamp_block: &TimestampConfig, config: &Co
 
 async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: Config) -> Result<()> {
     for sync_block in config.sync_blocks {
-        process_sync_blocks(&processor, &response_xml, &sync_block, &config).await?;
+        process_sync_blocks(&processor, &response_xml, &sync_block, &config)?;
     }
     // Inject timestamp after all sync_blocks processed
     for timestamp_block in config.timestamp_blocks {
-        process_timestamp_blocks(&timestamp_block, &config, ).await?;
+        process_timestamp_blocks(&timestamp_block, &config)?;
         }
     Ok(())
 }
 
-#[tokio::main]
-async fn main() {
-    match real_main().await {
-        Err(e) => {
-            eprintln!("Error: {:#}", e);
-            std::process::exit(1);
-        },
-        Ok(()) => {
-            std::process::exit(0);
-        }
-    }
-}
-
-async fn real_main() -> anyhow::Result<()> {
-    // Parse arguments
-    let args: Vec<String> = env::args().collect();
-    let verbose = args.iter().any(|a| a == "--verbose" || a == "-v");
-
-    if verbose {
-        print_instructions();
-        env_logger::builder().filter_level(log::LevelFilter::Debug).init();
-    } else {
-        env_logger::builder().filter_level(log::LevelFilter::Info).init();
-    }
-    // Load configuration
-    let config = Config::load_from_file("config/config.toml")
-        .context("Failed to load configuration file")?;
-    run_qbxml(config).await
-}
-
-async fn run_qbxml(config: Config) -> Result<()> {
+async fn run_qbxml(config: &Config) -> Result<()> {
     unsafe {
         let hr = winapi::um::combaseapi::CoInitializeEx(std::ptr::null_mut(), winapi::um::objbase::COINIT_APARTMENTTHREADED);
         if hr < 0 {
@@ -133,13 +102,17 @@ async fn run_qbxml(config: Config) -> Result<()> {
 
     let processor = QbxmlRequestProcessor::new().context("Failed to create QBXML request processor")?;
     
-    // AppID isn't used by the QBSDK
+    // AppID isn't used by the QBSDK, if a value is passed in config it is harmless but not used
     let app_id = config.quickbooks.application_id.as_deref().unwrap_or(""); 
-    // If we ever change the name of the service we register with Quickbooks we'll have to change this default too
+
+    /*  If we ever change the name of the service we register with Quickbooks we'll have 
+    to change this default too in order to ensure the program will work even if the config.toml loses this setting
+    */
     let app_name = config.quickbooks.application_name.as_deref().unwrap_or("QuickBooks Sync Service"); 
     
     processor.open_connection(app_id, app_name)?;
 
+    // sets company_file to AUTO if blank, company file name if provided in config.toml
     let company_file = match config.quickbooks.company_file.as_str() { 
         "AUTO" => "",
         path => {
@@ -147,8 +120,13 @@ async fn run_qbxml(config: Config) -> Result<()> {
             path }
         };
     
+    // we could try to check to see if we have an apparenlty valid ticket here but ...
     let ticket = processor.begin_session(company_file, crate::FileMode::DoNotCare)?;
 
+    /* 
+    we'll get the Err match arm here if the ticket is invalid so we'll just let this match do double-duty for the
+    happy and sad paths
+    */
     match processor.get_account_xml(&ticket) {
         Ok(Some(response_xml)) => {
             process_qbxml(&processor, &response_xml, config).await?;
@@ -160,8 +138,62 @@ async fn run_qbxml(config: Config) -> Result<()> {
             eprintln!("[QBXML] Error querying Quickbooks: {:#}", e);
         }
     }
-    processor.end_session(&ticket)?;
-    processor.close_connection()?;
+    /* 
+    original code had a ? here, but I want to try to continue clean up even if this fails
+    I think this could happen if the ticket was invalid but the connection might be open
+    */
+    if processor.end_session(&ticket) = Err(e) {
+        eprintln!("[QBXML] end_session errored: {:#}", e);
+    }
+    /* 
+    original code had a ? here, but I want to try to continue clean up even if this fails
+    I think this could happen if the connection was open but the COM system was initialized
+    */
+    if processor.close_connection() = Err(e) {
+        eprintln!("[QBXML] close_connection errored: {:#}", e);
+    }
+    // YOLO
     unsafe { winapi::um::combaseapi::CoUninitialize(); }
+
+    /* 
+    THis is a pretty unhelpful Ok(()) tbh; it really just means the program didn't crash not that
+    it actually achieved its objectives
+    */
     Ok(())
+}
+
+#[tokio::main]
+async fn main() {
+    // Parse arguments
+    let args: Vec<String> = env::args().collect();
+    let verbose = args.iter().any(|a| a == "--verbose" || a == "-v");
+
+    if verbose {
+        print_instructions();
+        env_logger::builder().filter_level(log::LevelFilter::Debug).init();
+    } else {
+        env_logger::builder().filter_level(log::LevelFilter::Info).init();
+    }
+    // Load configuration
+    let config = match Config::load_from_file("config/config.toml") {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            eprintln!("Error: {:#}", e);
+
+            // no config.toml? we out!
+            std::process::exit(1);
+        }
+    };
+    // Do the work
+    match run_qbxml(&config).await {
+      Err(e) => {
+            eprintln!("Error: {:#}", e);
+            std::process::exit(1);
+        },
+      Ok(()) => {
+            // Happy Path!
+            // doing nothing
+            // will return with exit code 0
+        }
+    };
 }
