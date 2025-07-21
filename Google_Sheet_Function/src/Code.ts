@@ -92,6 +92,7 @@ function UPDATE_SHEET_CELL_STRING(spreadsheetId, sheetName, cellAddress,  string
     }
 }
 
+
 /**
  * Web App endpoint to receive float to post to sheet
  * This function handles POST requests from the Rust service running as a Windows service.
@@ -107,9 +108,9 @@ function doUpdateFloat(data) {
             data.cellAddress,
             data.floatValue
         );
-        return ContentService
+        return ContentService;
             //.createTextOutput(JSON.stringify({ success: true, message: result }))
-            .setMimeType(ContentService.MimeType.JSON);
+            //.setMimeType(ContentService.MimeType.JSON);
     }
     catch (error) {
         console.error('[doUpdateFloat] Error:', error);
@@ -134,14 +135,14 @@ function doUpdateString(data) {
             data.cellAddress,
             data.stringValue
         );
-        return ContentService
-            .createTextOutput(JSON.stringify({ success: true, message: result }))
-            .setMimeType(ContentService.MimeType.JSON);
+        return ContentService;
+            // .createTextOutput(JSON.stringify({ success: true, message: result }))
+            // .setMimeType(ContentService.MimeType.JSON);
     }
     catch (error) {
         console.error('[doUpdateString] Error:', error);
         return ContentService
-            // .createTextOutput(JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }))
+            .createTextOutput(JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }))
             .setMimeType(ContentService.MimeType.JSON);
     }
 }
