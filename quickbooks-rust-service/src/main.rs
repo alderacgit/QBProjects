@@ -83,11 +83,11 @@ async fn process_timestamp_blocks(the_timestamp_block: &TimestampConfig, config:
 }
 
 async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: Config) -> Result<()> {
-    for sync_block in config.sync_blocks {
+    for sync_block in &config.sync_blocks {
         process_sync_blocks(&processor, &response_xml, &sync_block, &config).await?;
     }
     // Inject timestamp after all sync_blocks processed
-    for timestamp_block in config.timestamp_blocks {
+    for timestamp_block in &config.timestamp_blocks {
         process_timestamp_blocks(&timestamp_block, &config).await?;
         }
     Ok(())
