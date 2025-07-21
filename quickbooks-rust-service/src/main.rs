@@ -6,6 +6,7 @@ use anyhow::{Result, Context};
 use log::info;
 use winapi::um::winnt::UpdateBlackBoxRecorder;
 use std::env;
+use futures::future::join_all; // <-- Add this import
 
 use crate::config::{AccountSyncConfig, TimestampConfig, Config};
 use crate::file_mode::FileMode;
