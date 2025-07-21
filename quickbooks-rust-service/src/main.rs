@@ -83,13 +83,23 @@ async fn process_timestamp_blocks(the_timestamp_block: &TimestampConfig, config:
 }
 
 async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: &Config) -> Result<()> {
-    for sync_block in &config.sync_blocks {
-        process_sync_blocks(&processor, &response_xml, &sync_block, &config).await?;
+    let sync_futures = config.sync_blocks.iter().map(|sync_block| {
+        process_sync_blocks(processor, response_xml, sync_block, config)
+    });
+    let sync_results = join_all(sync_futures).await;
+    for result in sync_results {
+        result?; // Propagate any error
     }
-    // Inject timestamp after all sync_blocks processed
-    for timestamp_block in &config.timestamp_blocks {
-        process_timestamp_blocks(&timestamp_block, &config).await?;
-        }
+
+    // Process timestamp blocks in parallel
+    let timestamp_futures = config.timestamp_blocks.iter().map(|timestamp_block| {
+        process_timestamp_blocks(timestamp_block, config)
+    });
+    let timestamp_results = join_all(timestamp_futures).await;
+    for result in timestamp_results {
+        result?; // Propagate any error
+    }
+
     Ok(())
 }
 
