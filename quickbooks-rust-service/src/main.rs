@@ -83,14 +83,12 @@ async fn process_timestamp_blocks(the_timestamp_block: &TimestampConfig, config:
 }
 
 async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: Config) -> Result<()> {
-    let mut sync_block_collecation = config.sync_blocks.iter().collect();
-    for sync_block in sync_block_collecation {
-        process_sync_blocks(&processor, &response_xml, sync_block, &config).await?;
+    for sync_block in config.sync_blocks {
+        process_sync_blocks(&processor, &response_xml, &sync_block, &config).await?;
     }
     // Inject timestamp after all sync_blocks processed
-    let mut timestamp_block_collecation = config.timestamp_blocks.iter().collect();
-    for timestamp_block in timestamp_block_collection {
-        process_timestamp_blocks(timestamp_block, &config).await?;
+    for timestamp_block in config.timestamp_blocks {
+        process_timestamp_blocks(&timestamp_block, &config).await?;
         }
     Ok(())
 }
