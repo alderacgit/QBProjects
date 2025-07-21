@@ -82,7 +82,7 @@ async fn process_timestamp_blocks(the_timestamp_block: &TimestampConfig, config:
     Ok(())
 }
 
-async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: Config) -> Result<()> {
+async fn process_qbxml(processor: &QbxmlRequestProcessor, response_xml: &str, config: &Config) -> Result<()> {
     for sync_block in &config.sync_blocks {
         process_sync_blocks(&processor, &response_xml, &sync_block, &config).await?;
     }
@@ -139,7 +139,7 @@ async fn run_qbxml(config: &Config) -> Result<()> {
         match processor.get_account_xml(&ticket) {
             Ok(Some(response_xml)) => {
                 // this is it! This is where all the real processing starts!
-                match process_qbxml(&processor, &response_xml, config).await {
+                match process_qbxml(&processor, &response_xml, &config).await {
                     Err(e) => eprintln!("[QBXML] Error processing QBXML: {:#}", e),
                     Ok(()) => eprintln!("[QBXML] Processing succeeded")
                 };
