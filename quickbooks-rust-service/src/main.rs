@@ -153,7 +153,8 @@ async fn run_qbxml(config: &Config) -> Result<()> {
                 // this is it! This is where all the real processing starts!
                 match process_qbxml(&processor, &response_xml, &config).await {
                     Err(e) => eprintln!("[QBXML] Error processing QBXML: {:#}", e),
-                    Ok(()) => eprintln!("[QBXML] Processing succeeded")
+                    // Ok(()) => eprintln!("[QBXML] Processing succeeded")
+                    Ok(()) => println!(&response_xml),
                 };
             },
             Ok(None) => {
