@@ -151,7 +151,7 @@ async fn run_qbxml(config: &Config) -> Result<()> {
         match processor.get_account_xml(&ticket) {
             Ok(Some(response_xml)) => {
                 // for debugging this line shows us what we got from the API
-                info!(&response_xml);
+                info!(&response_xml.to_string());
                 // this is it! This is where all the real processing starts!
                 match process_qbxml(&processor, &response_xml, &config).await {
                     Err(e) => eprintln!("[QBXML] Error processing QBXML: {:#}", e),
