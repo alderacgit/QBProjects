@@ -63,8 +63,8 @@ impl QbxmlRequestProcessor {
         // Always pass empty string for AppID to avoid accidental registration (QBXML does not use AppID)
         let app_id_var = SafeVariant::from_string("");
         let app_name_var = SafeVariant::from_string(app_name);
-        // Parameter order matches QBFC for consistency
-        match self.invoke_method("OpenConnection", &[app_name_var, app_id_var]) {
+        // OpenConnection(appID, appName) -- documented order; invoke_method reverses for rgvarg.
+        match self.invoke_method("OpenConnection", &[app_id_var, app_name_var]) {
             Ok(_) => {
                 Ok(())
             },
@@ -81,14 +81,27 @@ impl QbxmlRequestProcessor {
     pub fn begin_session(&self, company_file: &str, file_mode: FileMode) -> Result<String, anyhow::Error> {
         let file_var = SafeVariant::from_string(company_file);
         let mode_int = match file_mode {
+            // NOTE ON THESE VALUES. Only DoNotCare => 2 is established: it is what this service
+            // has always sent and QuickBooks accepts it. The others are unverified.
+            //
+            // The earlier comment here cited "per IDL: omDontCare = 2", but that is ENOpenMode
+            // from QBFC16Lib ("QBFC16 COM OLE Data.IDL"), and this call goes to
+            // QBXMLRP2.RequestProcessor -- a different type library, which that IDL does not
+            // describe at all (it contains no reference to QBXMLRP2 or RequestProcessor). So the
+            // numbering was carried across libraries, which is exactly the extrapolation
+            // "PROJECT NOTES FOR AI.md" warns against.
+            //
+            // Do not "correct" these from the QBFC IDL. Resolve them from the QBXMLRP2 type
+            // library on the Windows host, then set them from that source. Until then, only pass
+            // DoNotCare.
             FileMode::SingleUser => 1,
             FileMode::MultiUser => 2,
-            FileMode::DoNotCare => 2, // per IDL: omDontCare = 2
+            FileMode::DoNotCare => 2,
             FileMode::Online => 3,
         };
         let mode_var = SafeVariant::from_i32(mode_int);
-        // Correct COM parameter order: [mode_var, file_var]
-        let result = self.invoke_method("BeginSession", &[mode_var, file_var])?;
+        // BeginSession(qbFileName, openMode) -- documented order; invoke_method reverses.
+        let result = self.invoke_method("BeginSession", &[file_var, mode_var])?;
         let vt = unsafe { result.as_variant().n1.n2().vt };
         let ticket = result.to_string().unwrap_or_default();
         if ticket.is_empty() {
@@ -100,8 +113,8 @@ impl QbxmlRequestProcessor {
     pub fn process_request(&self, ticket: &str, request: &str) -> Result<String, anyhow::Error> {
         let ticket_var = SafeVariant::from_string(ticket);
         let request_var = SafeVariant::from_string(request);
-        // ProcessRequest with parameters in the reverse order works!
-        let result = self.invoke_method("ProcessRequest", &[request_var, ticket_var])?;
+        // ProcessRequest(ticket, inputRequest) -- documented order; invoke_method reverses.
+        let result = self.invoke_method("ProcessRequest", &[ticket_var, request_var])?;
 
         result.to_string().ok_or_else(|| anyhow::anyhow!("ProcessRequest did not return a string"))
     }
@@ -175,6 +188,16 @@ impl QbxmlRequestProcessor {
         }
     }
 
+    /// Invoke a method on the RequestProcessor.
+    ///
+    /// `params` are given in the order the SDK documents them, left to right. This function does
+    /// the reversal COM requires: `DISPPARAMS::rgvarg` is ordered **last argument first**, so
+    /// `rgvarg[0]` is the rightmost parameter of the declared signature.
+    ///
+    /// That convention is the whole explanation for the "parameters sometimes have to be reversed"
+    /// behaviour this project used to treat as per-method luck. It is not per-method and it is not
+    /// luck: every multi-argument call needs it, which is why it is done once, here, instead of
+    /// being rediscovered at each call site.
     fn invoke_method(&self, method_name: &str, params: &[SafeVariant]) -> Result<SafeVariant, anyhow::Error> {
         let method_name_wide = widestring::U16CString::from_str(method_name).unwrap();
         // Instead, use VARIANT zeroed and wrap as needed
@@ -195,7 +218,8 @@ impl QbxmlRequestProcessor {
             if get_id_hr < 0 {
                 return Err(anyhow::anyhow!("GetIDsOfNames failed: HRESULT=0x{:08X}", get_id_hr));
             }
-            let mut variants: Vec<VARIANT> = params.iter().map(|v| v.0).collect();
+            // Reversed here, once: rgvarg[0] is the LAST declared parameter (COM convention).
+            let mut variants: Vec<VARIANT> = params.iter().rev().map(|v| v.0).collect();
             let mut dispparams = winapi::um::oaidl::DISPPARAMS {
                 rgvarg: if variants.is_empty() { std::ptr::null_mut() } else { variants.as_mut_ptr() },
                 rgdispidNamedArgs: std::ptr::null_mut(),
