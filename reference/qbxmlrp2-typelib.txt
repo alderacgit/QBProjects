@@ -1,0 +1,228 @@
+QBXMLRP2 type library, dumped from the live QuickBooks host.
+
+  host     the QuickBooks Desktop host: Windows Server 2022 (10.0.20348),
+           64-bit, pwsh 7.6.2 Core. Hostname omitted deliberately.
+  CLSID    {71F531F5-8E67-4A7A-9161-15733FFC3206}
+  TypeLib  {4351618F-9059-4A79-B638-DCB8B97B3262} v1.0
+  DLL      C:\Program Files\Common Files\Intuit\QuickBooks\QBXMLRP2.dll
+  dumped   2026-10-05 by scripts/dump-qbxmlrp2-typelib.ps1
+
+THIS, not "QBFC16 COM OLE Data.IDL", is the source for anything about
+QBXMLRP2.RequestProcessor. That IDL describes QBFC16Lib, a different type library,
+and mentions neither QBXMLRP2 nor RequestProcessor anywhere.
+
+Regenerate on a host that has the SDK with dump-qbxmlrp2-typelib.ps1 from the
+QuickBooksAPIMCP repo (scripts/). It is not kept here because this repo's
+.gitignore excludes *.ps1.
+----------------------------------------------------------------------------
+
+=== HOST ========================================================
+Microsoft Windows NT 10.0.20348.0
+hostname: <omitted>   PSVersion: 7.6.2 (Core)
+64-bit OS: True   64-bit PowerShell: True
+
+=== QBXMLRP2 REGISTRATION =======================================
+view:  HKLM:\SOFTWARE\Classes
+CLSID: {71F531F5-8E67-4A7A-9161-15733FFC3206}
+InprocServer32 : C:\Program Files\Common Files\Intuit\QuickBooks\QBXMLRP2.dll
+TypeLib GUID: {4351618F-9059-4A79-B638-DCB8B97B3262}
+  version 1.0
+    win64 : C:\PROGRA~1\COMMON~1\Intuit\QUICKB~1\QBXMLRP2.dll
+    win32 : C:\PROGRA~2\COMMON~1\Intuit\QUICKB~1\QBXMLRP2.dll
+
+USING TYPE LIBRARY: C:\PROGRA~1\COMMON~1\Intuit\QUICKB~1\QBXMLRP2.dll
+
+=== TYPE LIBRARY CONTENTS =======================================
+type infos: 14
+
+--- ENUMS ---
+enum QBFileMode   // enum QBFileMode
+    qbFileOpenSingleUser = 0
+    qbFileOpenMultiUser = 1
+    qbFileOpenDoNotCare = 2
+enum QBXMLRPReleaseLevel
+    preAlpha = 0
+    alpha = 1
+    beta = 2
+    release = 3
+enum QBXMLRPConnectionType
+    unknown = 0
+    localQBD = 1
+    remoteQBD = 2
+    localQBDLaunchUI = 3
+    remoteQBOE = 4
+enum QBXMLRPUnattendedModePrefType
+    umpRequired = 1
+    umpOptional = 2
+    umpNotNeeded = 3
+enum QBXMLRPPersonalDataPrefType
+    pdpRequired = 1
+    pdpOptional = 2
+    pdpNotNeeded = 3
+
+--- INTERFACES / METHODS (parameters in DECLARED order) ---
+
+interface IRequestProcessor6  (TKIND_DISPATCH, 25 funcs)
+    INVOKE_FUNC  QueryInterface(riid, ppvObj)   [cParams=2, memid=1610612736]
+    INVOKE_FUNC  AddRef()   [cParams=0, memid=1610612737]
+    INVOKE_FUNC  Release()   [cParams=0, memid=1610612738]
+    INVOKE_FUNC  GetTypeInfoCount(pctinfo)   [cParams=1, memid=1610678272]
+    INVOKE_FUNC  GetTypeInfo(itinfo, lcid, pptinfo)   [cParams=3, memid=1610678273]
+    INVOKE_FUNC  GetIDsOfNames(riid, rgszNames, cNames, lcid, rgdispid)   [cParams=5, memid=1610678274]
+    INVOKE_FUNC  Invoke(dispidMember, riid, lcid, wFlags, pdispparams, pvarResult, pexcepinfo, puArgErr)   [cParams=8, memid=1610678275]
+    INVOKE_FUNC  ProcessRequest(ticket, inputRequest)   [cParams=2, memid=1]
+    INVOKE_FUNC  OpenConnection(appID, appName)   [cParams=2, memid=2]
+    INVOKE_FUNC  CloseConnection()   [cParams=0, memid=3]
+    INVOKE_FUNC  BeginSession(qbFileName, reqFileMode)   [cParams=2, memid=4]
+    INVOKE_FUNC  EndSession(ticket)   [cParams=1, memid=5]
+    INVOKE_FUNC  GetCurrentCompanyFileName(ticket)   [cParams=1, memid=6]
+    INVOKE_PROPERTYGET  MajorVersion()   [cParams=0, memid=7]
+    INVOKE_PROPERTYGET  MinorVersion()   [cParams=0, memid=8]
+    INVOKE_PROPERTYGET  ReleaseLevel()   [cParams=0, memid=9]
+    INVOKE_PROPERTYGET  ReleaseNumber()   [cParams=0, memid=10]
+    INVOKE_PROPERTYGET  QBXMLVersionsForSession(ticket)   [cParams=1, memid=11]
+    INVOKE_PROPERTYGET  ConnectionType()   [cParams=0, memid=12]
+    INVOKE_FUNC  ProcessSubscription(inputRequest)   [cParams=1, memid=13]
+    INVOKE_PROPERTYGET  QBXMLVersionsForSubscription()   [cParams=0, memid=14]
+    INVOKE_FUNC  OpenConnection2(appID, appName, connPref)   [cParams=3, memid=15]
+    INVOKE_PROPERTYGET  AuthPreferences()   [cParams=0, memid=16]
+    INVOKE_FUNC  GetQBLastError()   [cParams=0, memid=17]
+    INVOKE_FUNC  BeginSession2(qbFileName, reqFileMode)   [cParams=2, memid=18]
+
+interface IRequestProcessor5  (TKIND_DISPATCH, 24 funcs)
+    INVOKE_FUNC  QueryInterface(riid, ppvObj)   [cParams=2, memid=1610612736]
+    INVOKE_FUNC  AddRef()   [cParams=0, memid=1610612737]
+    INVOKE_FUNC  Release()   [cParams=0, memid=1610612738]
+    INVOKE_FUNC  GetTypeInfoCount(pctinfo)   [cParams=1, memid=1610678272]
+    INVOKE_FUNC  GetTypeInfo(itinfo, lcid, pptinfo)   [cParams=3, memid=1610678273]
+    INVOKE_FUNC  GetIDsOfNames(riid, rgszNames, cNames, lcid, rgdispid)   [cParams=5, memid=1610678274]
+    INVOKE_FUNC  Invoke(dispidMember, riid, lcid, wFlags, pdispparams, pvarResult, pexcepinfo, puArgErr)   [cParams=8, memid=1610678275]
+    INVOKE_FUNC  ProcessRequest(ticket, inputRequest)   [cParams=2, memid=1]
+    INVOKE_FUNC  OpenConnection(appID, appName)   [cParams=2, memid=2]
+    INVOKE_FUNC  CloseConnection()   [cParams=0, memid=3]
+    INVOKE_FUNC  BeginSession(qbFileName, reqFileMode)   [cParams=2, memid=4]
+    INVOKE_FUNC  EndSession(ticket)   [cParams=1, memid=5]
+    INVOKE_FUNC  GetCurrentCompanyFileName(ticket)   [cParams=1, memid=6]
+    INVOKE_PROPERTYGET  MajorVersion()   [cParams=0, memid=7]
+    INVOKE_PROPERTYGET  MinorVersion()   [cParams=0, memid=8]
+    INVOKE_PROPERTYGET  ReleaseLevel()   [cParams=0, memid=9]
+    INVOKE_PROPERTYGET  ReleaseNumber()   [cParams=0, memid=10]
+    INVOKE_PROPERTYGET  QBXMLVersionsForSession(ticket)   [cParams=1, memid=11]
+    INVOKE_PROPERTYGET  ConnectionType()   [cParams=0, memid=12]
+    INVOKE_FUNC  ProcessSubscription(inputRequest)   [cParams=1, memid=13]
+    INVOKE_PROPERTYGET  QBXMLVersionsForSubscription()   [cParams=0, memid=14]
+    INVOKE_FUNC  OpenConnection2(appID, appName, connPref)   [cParams=3, memid=15]
+    INVOKE_PROPERTYGET  AuthPreferences()   [cParams=0, memid=16]
+    INVOKE_FUNC  GetQBLastError()   [cParams=0, memid=17]
+
+interface IRequestProcessor4  (TKIND_DISPATCH, 23 funcs)
+    INVOKE_FUNC  QueryInterface(riid, ppvObj)   [cParams=2, memid=1610612736]
+    INVOKE_FUNC  AddRef()   [cParams=0, memid=1610612737]
+    INVOKE_FUNC  Release()   [cParams=0, memid=1610612738]
+    INVOKE_FUNC  GetTypeInfoCount(pctinfo)   [cParams=1, memid=1610678272]
+    INVOKE_FUNC  GetTypeInfo(itinfo, lcid, pptinfo)   [cParams=3, memid=1610678273]
+    INVOKE_FUNC  GetIDsOfNames(riid, rgszNames, cNames, lcid, rgdispid)   [cParams=5, memid=1610678274]
+    INVOKE_FUNC  Invoke(dispidMember, riid, lcid, wFlags, pdispparams, pvarResult, pexcepinfo, puArgErr)   [cParams=8, memid=1610678275]
+    INVOKE_FUNC  ProcessRequest(ticket, inputRequest)   [cParams=2, memid=1]
+    INVOKE_FUNC  OpenConnection(appID, appName)   [cParams=2, memid=2]
+    INVOKE_FUNC  CloseConnection()   [cParams=0, memid=3]
+    INVOKE_FUNC  BeginSession(qbFileName, reqFileMode)   [cParams=2, memid=4]
+    INVOKE_FUNC  EndSession(ticket)   [cParams=1, memid=5]
+    INVOKE_FUNC  GetCurrentCompanyFileName(ticket)   [cParams=1, memid=6]
+    INVOKE_PROPERTYGET  MajorVersion()   [cParams=0, memid=7]
+    INVOKE_PROPERTYGET  MinorVersion()   [cParams=0, memid=8]
+    INVOKE_PROPERTYGET  ReleaseLevel()   [cParams=0, memid=9]
+    INVOKE_PROPERTYGET  ReleaseNumber()   [cParams=0, memid=10]
+    INVOKE_PROPERTYGET  QBXMLVersionsForSession(ticket)   [cParams=1, memid=11]
+    INVOKE_PROPERTYGET  ConnectionType()   [cParams=0, memid=12]
+    INVOKE_FUNC  ProcessSubscription(inputRequest)   [cParams=1, memid=13]
+    INVOKE_PROPERTYGET  QBXMLVersionsForSubscription()   [cParams=0, memid=14]
+    INVOKE_FUNC  OpenConnection2(appID, appName, connPref)   [cParams=3, memid=15]
+    INVOKE_PROPERTYGET  AuthPreferences()   [cParams=0, memid=16]
+
+interface IRequestProcessor3  (TKIND_DISPATCH, 21 funcs)
+    INVOKE_FUNC  QueryInterface(riid, ppvObj)   [cParams=2, memid=1610612736]
+    INVOKE_FUNC  AddRef()   [cParams=0, memid=1610612737]
+    INVOKE_FUNC  Release()   [cParams=0, memid=1610612738]
+    INVOKE_FUNC  GetTypeInfoCount(pctinfo)   [cParams=1, memid=1610678272]
+    INVOKE_FUNC  GetTypeInfo(itinfo, lcid, pptinfo)   [cParams=3, memid=1610678273]
+    INVOKE_FUNC  GetIDsOfNames(riid, rgszNames, cNames, lcid, rgdispid)   [cParams=5, memid=1610678274]
+    INVOKE_FUNC  Invoke(dispidMember, riid, lcid, wFlags, pdispparams, pvarResult, pexcepinfo, puArgErr)   [cParams=8, memid=1610678275]
+    INVOKE_FUNC  ProcessRequest(ticket, inputRequest)   [cParams=2, memid=1]
+    INVOKE_FUNC  OpenConnection(appID, appName)   [cParams=2, memid=2]
+    INVOKE_FUNC  CloseConnection()   [cParams=0, memid=3]
+    INVOKE_FUNC  BeginSession(qbFileName, reqFileMode)   [cParams=2, memid=4]
+    INVOKE_FUNC  EndSession(ticket)   [cParams=1, memid=5]
+    INVOKE_FUNC  GetCurrentCompanyFileName(ticket)   [cParams=1, memid=6]
+    INVOKE_PROPERTYGET  MajorVersion()   [cParams=0, memid=7]
+    INVOKE_PROPERTYGET  MinorVersion()   [cParams=0, memid=8]
+    INVOKE_PROPERTYGET  ReleaseLevel()   [cParams=0, memid=9]
+    INVOKE_PROPERTYGET  ReleaseNumber()   [cParams=0, memid=10]
+    INVOKE_PROPERTYGET  QBXMLVersionsForSession(ticket)   [cParams=1, memid=11]
+    INVOKE_PROPERTYGET  ConnectionType()   [cParams=0, memid=12]
+    INVOKE_FUNC  ProcessSubscription(inputRequest)   [cParams=1, memid=13]
+    INVOKE_PROPERTYGET  QBXMLVersionsForSubscription()   [cParams=0, memid=14]
+
+interface IAuthPreferences  (TKIND_DISPATCH, 14 funcs)
+    INVOKE_FUNC  QueryInterface(riid, ppvObj)   [cParams=2, memid=1610612736]
+    INVOKE_FUNC  AddRef()   [cParams=0, memid=1610612737]
+    INVOKE_FUNC  Release()   [cParams=0, memid=1610612738]
+    INVOKE_FUNC  GetTypeInfoCount(pctinfo)   [cParams=1, memid=1610678272]
+    INVOKE_FUNC  GetTypeInfo(itinfo, lcid, pptinfo)   [cParams=3, memid=1610678273]
+    INVOKE_FUNC  GetIDsOfNames(riid, rgszNames, cNames, lcid, rgdispid)   [cParams=5, memid=1610678274]
+    INVOKE_FUNC  Invoke(dispidMember, riid, lcid, wFlags, pdispparams, pvarResult, pexcepinfo, puArgErr)   [cParams=8, memid=1610678275]
+    INVOKE_FUNC  WasAuthPreferencesObeyed(ticket)   [cParams=1, memid=1]
+    INVOKE_FUNC  GetIsReadOnly(ticket)   [cParams=1, memid=2]
+    INVOKE_FUNC  PutIsReadOnly(isReadOnly)   [cParams=1, memid=3]
+    INVOKE_FUNC  GetUnattendedModePref(ticket)   [cParams=1, memid=4]
+    INVOKE_FUNC  PutUnattendedModePref(unattendedModePref)   [cParams=1, memid=5]
+    INVOKE_FUNC  GetPersonalDataPref(ticket)   [cParams=1, memid=6]
+    INVOKE_FUNC  PutPersonalDataPref(personalDataPref)   [cParams=1, memid=7]
+
+interface IAuthPreferences2  (TKIND_DISPATCH, 15 funcs)
+    INVOKE_FUNC  QueryInterface(riid, ppvObj)   [cParams=2, memid=1610612736]
+    INVOKE_FUNC  AddRef()   [cParams=0, memid=1610612737]
+    INVOKE_FUNC  Release()   [cParams=0, memid=1610612738]
+    INVOKE_FUNC  GetTypeInfoCount(pctinfo)   [cParams=1, memid=1610678272]
+    INVOKE_FUNC  GetTypeInfo(itinfo, lcid, pptinfo)   [cParams=3, memid=1610678273]
+    INVOKE_FUNC  GetIDsOfNames(riid, rgszNames, cNames, lcid, rgdispid)   [cParams=5, memid=1610678274]
+    INVOKE_FUNC  Invoke(dispidMember, riid, lcid, wFlags, pdispparams, pvarResult, pexcepinfo, puArgErr)   [cParams=8, memid=1610678275]
+    INVOKE_FUNC  WasAuthPreferencesObeyed(ticket)   [cParams=1, memid=1]
+    INVOKE_FUNC  GetIsReadOnly(ticket)   [cParams=1, memid=2]
+    INVOKE_FUNC  PutIsReadOnly(isReadOnly)   [cParams=1, memid=3]
+    INVOKE_FUNC  GetUnattendedModePref(ticket)   [cParams=1, memid=4]
+    INVOKE_FUNC  PutUnattendedModePref(unattendedModePref)   [cParams=1, memid=5]
+    INVOKE_FUNC  GetPersonalDataPref(ticket)   [cParams=1, memid=6]
+    INVOKE_FUNC  PutPersonalDataPref(personalDataPref)   [cParams=1, memid=7]
+    INVOKE_FUNC  PutAuthFlags(authFlags)   [cParams=1, memid=8]
+
+=== SDK DOC PATHS (does the withdrawn reference exist locally?) =
+C:\Program Files (x86)\Intuit\IDN : exists=False
+C:\Program Files\Common Files\Intuit : exists=True
+C:\Program Files (x86)\Intuit : exists=True
+C:\Program Files\Intuit : exists=True
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\billadd\QBFC3_IntelliSense.h: enum ENOpenMode
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\billadd\QBFC3_IntelliSense.h: omDontCare = 2
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\billadd\QBFC3_IntelliSense.h: enum ENOpenMode openMode );
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\billadd\QBFC3_IntelliSense.h: enum ENOpenMode openMode ) = 0;
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\billadd\QBFC3_IntelliSense.h: __declspec(implementation_key(2564)) HRESULT IQBSessionManager::BeginSession ( _bstr_t qbFile, enum ENOpenMode openMode );
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\customeradd\QBFC3_IntelliSense.h: enum ENOpenMode
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\customeradd\QBFC3_IntelliSense.h: omDontCare = 2
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\customeradd\QBFC3_IntelliSense.h: enum ENOpenMode openMode );
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\customeradd\QBFC3_IntelliSense.h: enum ENOpenMode openMode ) = 0;
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\customeradd\QBFC3_IntelliSense.h: __declspec(implementation_key(2564)) HRESULT IQBSessionManager::BeginSession ( _bstr_t qbFile, enum ENOpenMode openMode );
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\invoicequery\QBFC3_IntelliSense.h: enum ENOpenMode
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\invoicequery\QBFC3_IntelliSense.h: omDontCare = 2
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\invoicequery\QBFC3_IntelliSense.h: enum ENOpenMode openMode );
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\invoicequery\QBFC3_IntelliSense.h: enum ENOpenMode openMode ) = 0;
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\invoicequery\QBFC3_IntelliSense.h: __declspec(implementation_key(2564)) HRESULT IQBSessionManager::BeginSession ( _bstr_t qbFile, enum ENOpenMode openMode );
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\itemquery\QBFC3_IntelliSense.h: enum ENOpenMode
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\itemquery\QBFC3_IntelliSense.h: omDontCare = 2
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\itemquery\QBFC3_IntelliSense.h: enum ENOpenMode openMode );
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\itemquery\QBFC3_IntelliSense.h: enum ENOpenMode openMode ) = 0;
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\itemquery\QBFC3_IntelliSense.h: __declspec(implementation_key(2564)) HRESULT IQBSessionManager::BeginSession ( _bstr_t qbFile, enum ENOpenMode openMode );
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\multiplerequests\QBFC3_IntelliSense.h: enum ENOpenMode
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\multiplerequests\QBFC3_IntelliSense.h: omDontCare = 2
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\multiplerequests\QBFC3_IntelliSense.h: enum ENOpenMode openMode );
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\multiplerequests\QBFC3_IntelliSense.h: enum ENOpenMode openMode ) = 0;
+C:\Program Files\Intuit\IDN\QBSDK16.0\samples\qbdt\cpp\qbfc\multiplerequests\QBFC3_IntelliSense.h: __declspec(implementation_key(2564)) HRESULT IQBSessionManager::BeginSession ( _bstr_t qbFile, enum ENOpenMode openMode );

@@ -81,23 +81,32 @@ impl QbxmlRequestProcessor {
     pub fn begin_session(&self, company_file: &str, file_mode: FileMode) -> Result<String, anyhow::Error> {
         let file_var = SafeVariant::from_string(company_file);
         let mode_int = match file_mode {
-            // NOTE ON THESE VALUES. Only DoNotCare => 2 is established: it is what this service
-            // has always sent and QuickBooks accepts it. The others are unverified.
+            // QBFileMode, read from the QBXMLRP2 type library itself -- see
+            // reference/qbxmlrp2-typelib.txt, dumped from QBXMLRP2.dll on ALDERAC-AZ:
             //
-            // The earlier comment here cited "per IDL: omDontCare = 2", but that is ENOpenMode
-            // from QBFC16Lib ("QBFC16 COM OLE Data.IDL"), and this call goes to
-            // QBXMLRP2.RequestProcessor -- a different type library, which that IDL does not
-            // describe at all (it contains no reference to QBXMLRP2 or RequestProcessor). So the
-            // numbering was carried across libraries, which is exactly the extrapolation
-            // "PROJECT NOTES FOR AI.md" warns against.
+            //     qbFileOpenSingleUser = 0
+            //     qbFileOpenMultiUser  = 1
+            //     qbFileOpenDoNotCare  = 2
             //
-            // Do not "correct" these from the QBFC IDL. Resolve them from the QBXMLRP2 type
-            // library on the Windows host, then set them from that source. Until then, only pass
-            // DoNotCare.
-            FileMode::SingleUser => 1,
-            FileMode::MultiUser => 2,
+            // SingleUser and MultiUser were previously 1 and 2, which is wrong. They were never
+            // used -- we only ever pass DoNotCare -- so the error never fired, and DoNotCare's 2
+            // was right all along. This service has therefore always opened the file as
+            // "don't care", as intended.
+            //
+            // Do NOT source these from "QBFC16 COM OLE Data.IDL". That describes QBFC16Lib and
+            // mentions neither QBXMLRP2 nor RequestProcessor; its ENOpenMode uses the same three
+            // numbers purely by coincidence, which previously made a wrong comment look verified.
+            FileMode::SingleUser => 0,
+            FileMode::MultiUser => 1,
             FileMode::DoNotCare => 2,
-            FileMode::Online => 3,
+            // Not a QBFileMode value: the enum has exactly three members and no "online" mode.
+            // Passing this would send an out-of-range mode, so it is rejected rather than guessed.
+            FileMode::Online => {
+                return Err(anyhow::anyhow!(
+                    "FileMode::Online is not a QBXMLRP2 QBFileMode; valid modes are SingleUser, \
+                     MultiUser and DoNotCare (see reference/qbxmlrp2-typelib.txt)"
+                ))
+            }
         };
         let mode_var = SafeVariant::from_i32(mode_int);
         // BeginSession(qbFileName, openMode) -- documented order; invoke_method reverses.
@@ -198,6 +207,11 @@ impl QbxmlRequestProcessor {
     /// behaviour this project used to treat as per-method luck. It is not per-method and it is not
     /// luck: every multi-argument call needs it, which is why it is done once, here, instead of
     /// being rediscovered at each call site.
+    ///
+    /// Confirmed against the type library (reference/qbxmlrp2-typelib.txt). `IRequestProcessor6`
+    /// declares `ProcessRequest(ticket, inputRequest)`, `OpenConnection(appID, appName)`,
+    /// `BeginSession(qbFileName, reqFileMode)` and `EndSession(ticket)`; reversing each gives
+    /// exactly the `rgvarg` this service has always sent.
     fn invoke_method(&self, method_name: &str, params: &[SafeVariant]) -> Result<SafeVariant, anyhow::Error> {
         let method_name_wide = widestring::U16CString::from_str(method_name).unwrap();
         // Instead, use VARIANT zeroed and wrap as needed
